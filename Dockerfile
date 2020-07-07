@@ -17,7 +17,7 @@ RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
  && rm /Miniconda3-latest-Linux-x86_64.sh
 
 ENV PATH=/miniconda/bin:$PATH
-#RUN echo $PATH && echo $(ls home) && echo $(ls /miniconda/bin)
+RUN echo $PATH && echo $(ls home) && echo $(ls /miniconda/bin)
 
 # Create a Python 3.6 environment
 RUN /miniconda/bin/conda install -y conda-build \
