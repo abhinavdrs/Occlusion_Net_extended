@@ -41,6 +41,10 @@ def parse_args():
         help='the objects want to detect, support car and person', default='car'
     )
     parser.add_argument(
+        '-vid', '--video_dir',
+        help='Enter the name of the video file moved in demo folder', default='test_video'
+    )		
+    parser.add_argument(
         '-v', '--visualize', type=distutils.util.strtobool, default=False)
     parser.add_argument(
         '-vis_color', default='rainbow')
@@ -57,11 +61,15 @@ def main():
     config_file = args.config_file
     assert config_file
 
-    assert args.url_list or args.url_txt or args.image_dir
+    assert args.url_list or args.url_txt or args.image_dir or args.video_dir
     if len(args.url_list) > 0:
         url_list = args.url_list
     elif args.url_txt:
         url_list = list(np.loadtxt(args.url_txt, dtype=str))
+    elif args.video_dir:
+        video_dir = args.video_dir
+        cap = cv2.VideoCapture(video_dir)
+        video = True
     else:
         image_dir = args.image_dir
         url_list = [os.path.join(image_dir, item) for item in os.listdir(image_dir)]
@@ -93,6 +101,72 @@ def main():
     record_dict = {'model': cfg.MODEL.WEIGHT,
                    'time': now,
                    'results': []}
+
+    if(video):
+        width, height = (
+            int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        )
+        fps = int(cap.get(cv2.CAP_PROP_FPS))
+        out = cv2.VideoWriter()
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        out.open(os.path.join(output_dir, 'output.mp4'), fourcc, fps, (width, height), True)
+        while(cap.isOpened()):
+            ret, curr_frame = cap.read()
+            if(ret):
+                try:
+
+                #if 2>1:
+                    predictions = coco_demo.compute_prediction(curr_frame)
+                    top_predictions = coco_demo.select_top_predictions(predictions)
+
+                    scores = top_predictions.get_field("scores")
+                    labels = top_predictions.get_field("labels")
+                    boxes = predictions.bbox
+
+                    infer_result = {'url': cap.get(cv2.CAP_PROP_POS_FRAMES),
+                                    'boxes': [],
+                                    'scores': [],
+                                    'labels': []}
+                    for box, score, label in zip(boxes, scores, labels):
+                        boxpoints = [item for item in box.tolist()]
+                        infer_result['boxes'].append(boxpoints)
+                        infer_result['scores'].append(score.item())
+                        infer_result['labels'].append(label.item())
+                    record_dict['results'].append(infer_result)
+                    # visualize the results
+                    if save_image:
+                        result = np.copy(curr_frame)
+                        #result = coco_demo.overlay_boxes(result, top_predictions)
+                        #result = coco_demo.overlay_class_names(result, top_predictions)
+                        if cfg.MODEL.KEYPOINT_ON:
+                            if target == 'person':
+                                result = coco_demo.overlay_keypoints_graph(result, top_predictions, target='person')
+                            if target == 'car':
+                                result = coco_demo.overlay_keypoints_graph(result, top_predictions,vis_color , target='car')
+                        out.write(result)
+                        print('Processed frame ' + str(cap.get(cv2.CAP_PROP_POS_FRAMES)))
+                except:
+                    print('Fail to infer for image {}. Skipped.'.format(url))
+                    continue
+
+            else:
+                break
+
+
+    cap.release()
+    out.release()
+
+    print(now)
+    now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    print(now)
+
+    with open(output_path, 'w') as f:
+        json.dump(record_dict, f)
+
+    exit()
+
+
 
     for url in url_list:
         if not os.path.exists(url):
