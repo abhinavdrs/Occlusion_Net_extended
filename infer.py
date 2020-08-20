@@ -94,9 +94,11 @@ def main():
     output_dir = cfg.OUTPUT_DIR
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_path = os.path.join(output_dir, now+'.json')
+    video_name = video_dir.split('/')[-1].split('.')[0]
+    output_path = os.path.join(output_dir, video_name+'.json')
+    skipped_frames_dir = output_dir +'/' + video_name +'_skipped_frames'
+    os.makedirs(skipped_frames_dir)
 
     record_dict = {'model': cfg.MODEL.WEIGHT,
                    'time': now,
@@ -110,9 +112,10 @@ def main():
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         out = cv2.VideoWriter()
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        out.open(os.path.join(output_dir, 'output.mp4'), fourcc, fps, (width, height), True)
+        out.open(os.path.join(output_dir, video_name + '.mp4'), fourcc, fps, (width, height), True)
         while(cap.isOpened()):
             ret, curr_frame = cap.read()
+            curr_frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
             if(ret):
                 try:
 
@@ -124,7 +127,7 @@ def main():
                     labels = top_predictions.get_field("labels")
                     boxes = predictions.bbox
 
-                    infer_result = {'url': cap.get(cv2.CAP_PROP_POS_FRAMES),
+                    infer_result = {'url': curr_frame_number,
                                     'boxes': [],
                                     'scores': [],
                                     'labels': []}
@@ -145,9 +148,10 @@ def main():
                             if target == 'car':
                                 result = coco_demo.overlay_keypoints_graph(result, top_predictions,vis_color , target='car')
                         out.write(result)
-                        print('Processed frame ' + str(cap.get(cv2.CAP_PROP_POS_FRAMES)))
+                        print('Processed frame ' + str(curr_frame_number))
                 except:
-                    print('Fail to infer for image {}. Skipped.'.format(url))
+                    print('Fail to infer for image {}. Skipped.'.format(str(curr_frame_number)))
+                    cv2.imwrite(os.path.join(skipped_frames_dir, str(curr_frame_number)) + '.jpg', curr_frame)
                     continue
 
             else:
