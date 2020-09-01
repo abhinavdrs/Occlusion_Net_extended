@@ -11,6 +11,7 @@ import torch
 import numpy as np
 import datetime
 import json
+import time
 
 
 def parse_args():
@@ -57,7 +58,7 @@ def parse_args():
 def main():
     """ main function """
     args = parse_args()
-
+    video = False
     config_file = args.config_file
     assert config_file
 
@@ -95,20 +96,26 @@ def main():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    video_name = video_dir.split('/')[-1].split('.')[0]
-    output_path = os.path.join(output_dir, video_name+'.json')
-    skipped_frames_dir = output_dir +'/' + video_name +'_skipped_frames'
-    os.makedirs(skipped_frames_dir)
+    output_path = os.path.join(output_dir, now+'.json')
+
 
     record_dict = {'model': cfg.MODEL.WEIGHT,
                    'time': now,
                    'results': []}
 
     if(video):
+        video_name = video_dir.split('/')[-1].split('.')[0]
+        output_path = os.path.join(output_dir, video_name+'.json')
+        skipped_frames_dir = output_dir +'/' + video_name +'_skipped_frames'
+        if os.path.exists(skipped_frames_dir):
+            shutil.rmtree(skipped_frames_dir)
+
+        os.makedirs(skipped_frames_dir)
         width, height = (
             int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
             int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         )
+        print(width,height)
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         out = cv2.VideoWriter()
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
@@ -118,25 +125,36 @@ def main():
             curr_frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
             if(ret):
                 try:
-
                 #if 2>1:
                     predictions = coco_demo.compute_prediction(curr_frame)
                     top_predictions = coco_demo.select_top_predictions(predictions)
-
                     scores = top_predictions.get_field("scores")
                     labels = top_predictions.get_field("labels")
                     boxes = predictions.bbox
+                   #predictions.fields() - ' ['labels', 'scores', 'keypoints']'
+
+                    keypoints = top_predictions.get_field("keypoints")
+                    scores_keypoints = keypoints.get_field("logits")
+
+                    #kps has shape (4, #keypoints) where 4 rows are (x, y, logit, prob)
+                    kps = keypoints.keypoints
+
+                    #replaces third column of KPS with confidence value for each keypoint
+                    kps_cat = torch.cat((kps[:, :, 0:2], scores_keypoints[:, :, None]), dim=2).numpy()
 
                     infer_result = {'url': curr_frame_number,
                                     'boxes': [],
                                     'scores': [],
-                                    'labels': []}
-                    for box, score, label in zip(boxes, scores, labels):
+                                    'labels': [],
+                                    'keypoints': []}
+                    for box, score, label, keypts in zip(boxes, scores, labels, kps_cat):
                         boxpoints = [item for item in box.tolist()]
                         infer_result['boxes'].append(boxpoints)
                         infer_result['scores'].append(score.item())
                         infer_result['labels'].append(label.item())
+                        infer_result['keypoints'].append(keypts.tolist())
                     record_dict['results'].append(infer_result)
+
                     # visualize the results
                     if save_image:
                         result = np.copy(curr_frame)
@@ -153,22 +171,24 @@ def main():
                     print('Fail to infer for image {}. Skipped.'.format(str(curr_frame_number)))
                     cv2.imwrite(os.path.join(skipped_frames_dir, str(curr_frame_number)) + '.jpg', curr_frame)
                     continue
+            elif not ret:
+                print('Could not read frame', str(curr_frame_number))
+                #cap.set(cv2.CAP_PROP_POS_FRAMES, curr_frame_number + 1)
+                break
+                cap.release()
+                out.release()
 
             else:
                 break
 
-
-    cap.release()
-    out.release()
-
     print(now)
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     print(now)
+    if(video):
+        with open(output_path, 'w') as f:
+            json.dump(record_dict, f)
+            exit()
 
-    with open(output_path, 'w') as f:
-        json.dump(record_dict, f)
-
-    exit()
 
 
 
@@ -190,15 +210,26 @@ def main():
             labels = top_predictions.get_field("labels")
             boxes = predictions.bbox
 
+            keypoints = top_predictions.get_field("keypoints")
+            scores_keypoints = keypoints.get_field("logits")
+
+            #kps has shape (4, #keypoints) where 4 rows are (x, y, logit, prob)
+            kps = keypoints.keypoints
+
+            #replaces third column of KPS with confidence value for each keypoint
+            kps_cat = torch.cat((kps[:, :, 0:2], scores_keypoints[:, :, None]), dim=2).numpy()
+
             infer_result = {'url': url,
                             'boxes': [],
                             'scores': [],
-                            'labels': []}
-            for box, score, label in zip(boxes, scores, labels):
+                            'labels': [],
+                            'keypoints': []}
+            for box, score, label, keypts in zip(boxes, scores, labels, kps_cat):
                 boxpoints = [item for item in box.tolist()]
                 infer_result['boxes'].append(boxpoints)
                 infer_result['scores'].append(score.item())
                 infer_result['labels'].append(label.item())
+                infer_result['keypoints'].append(keypts.tolist())
             record_dict['results'].append(infer_result)
             # visualize the results
             if save_image:
