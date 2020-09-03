@@ -167,6 +167,8 @@ def main():
                                 result = coco_demo.overlay_keypoints_graph(result, top_predictions, target='person')
                             if target == 'car':
                                 result = coco_demo.overlay_keypoints_graph(result, top_predictions,vis_color , target='car')
+                                result = coco_demo.overlay_boxes(result,top_predictions)
+                                result = coco_demo.overlay_class_names(result, top_predictions)
                         out.write(result)
                         print('Processed frame ' + str(curr_frame_number))
                 except:
@@ -210,7 +212,7 @@ def main():
 
             scores = top_predictions.get_field("scores")
             labels = top_predictions.get_field("labels")
-        
+
             #take boxes from top_predictions
             boxes = top_predictions.bbox
 
@@ -245,6 +247,8 @@ def main():
                         result = coco_demo.overlay_keypoints_graph(result, top_predictions, target='person')
                      if target == 'car':
                         result = coco_demo.overlay_keypoints_graph(result, top_predictions,vis_color , target='car')
+                        result = coco_demo.overlay_boxes(result,top_predictions)
+                        result = coco_demo.overlay_class_names(result, top_predictions)
                 cv2.imwrite(os.path.join(output_dir, url.split('/')[-1]), result)
                 print(os.path.join(output_dir, url.split('/')[-1]))
         except:
