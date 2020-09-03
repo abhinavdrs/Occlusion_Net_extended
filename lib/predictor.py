@@ -17,9 +17,9 @@ class COCODemo(object):
     # COCO categories for pretty print
     CATEGORIES = [
         "__background",
+        "car",
         "person",
         "bicycle",
-        "car",
         "motorcycle",
         "airplane",
         "bus",
