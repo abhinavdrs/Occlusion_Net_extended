@@ -130,9 +130,11 @@ def main():
                     top_predictions = coco_demo.select_top_predictions(predictions)
                     scores = top_predictions.get_field("scores")
                     labels = top_predictions.get_field("labels")
-                    boxes = predictions.bbox
-                   #predictions.fields() - ' ['labels', 'scores', 'keypoints']'
 
+                    #take boxes from top_predictions
+                    boxes = top_predictions.bbox
+
+                    #predictions.fields() - ' ['labels', 'scores', 'keypoints']'
                     keypoints = top_predictions.get_field("keypoints")
                     scores_keypoints = keypoints.get_field("logits")
 
@@ -208,7 +210,9 @@ def main():
 
             scores = top_predictions.get_field("scores")
             labels = top_predictions.get_field("labels")
-            boxes = predictions.bbox
+        
+            #take boxes from top_predictions
+            boxes = top_predictions.bbox
 
             keypoints = top_predictions.get_field("keypoints")
             scores_keypoints = keypoints.get_field("logits")
