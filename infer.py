@@ -67,6 +67,10 @@ def main():
         url_list = args.url_list
     elif args.url_txt:
         url_list = list(np.loadtxt(args.url_txt, dtype=str))
+    elif args.image_dir:
+        image_dir = args.image_dir
+        url_list = [os.path.join(image_dir, item) for item in os.listdir(image_dir)]
+
     elif args.video_dir:
         video_dir = args.video_dir
         cap = cv2.VideoCapture(video_dir)
@@ -104,6 +108,7 @@ def main():
                    'results': []}
 
     if(video):
+        print("Processing Video")
         video_name = video_dir.split('/')[-1].split('.')[0]
         output_path = os.path.join(output_dir, video_name+'.json')
         skipped_frames_dir = output_dir +'/' + video_name +'_skipped_frames'
