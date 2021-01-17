@@ -12,7 +12,7 @@ The Occlusion-net\_extended extends Occlusion-Net as follows:
 
 4) The .json output for each object now contains predicted keypoint locations (earlier only BB coordinates) and their confidence scores.
 
-5) The bounding box coordinates of each object now match with their corresponding keypoints (earlier BB with ID=1 had keypoints corresponding to BB with ID=2).
+5) The bounding box coordinates of each object now matches with its corresponding keypoints (earlier BB with ID=1 had keypoints corresponding to BB with ID=2).
 
 6) Additional python modules are available for extracting frames from videos to process them as an image directory and for combining the processed frames into a video. These are done in parallel.
 
