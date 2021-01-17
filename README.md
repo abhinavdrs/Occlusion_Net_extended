@@ -1,120 +1,48 @@
-Occlusion-Net: 2D/3D Occluded Keypoint Localization Using Graph Networks 
+Occlusion-Net\_extended: Extending [[Occlusion-Net]https://github.com/dineshreddy91/Occlusion\_Net] for video analysis context.
 ======================
+This repository extends original [[Occlusion-Net]https://github.com/dineshreddy91/Occlusion\_Net] repository in order to run its object detection pipeline on traffic survelliance videos collected at the [[Chair of Integrated Transport Planning and Traffic Engineering]https://tu-dresden.de/bu/verkehr/ivs/ivst/studium?set_language=en].
 
-[N Dinesh Reddy](http://cs.cmu.edu/~dnarapur), [Minh Vo](http://cs.cmu.edu/~mvo), [Srinivasa G. Narasimhan](http://www.cs.cmu.edu/~srinivas/)
+The Occlusion-net\_extended extends Occlusion-Net as follows:
 
-IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2019. 
+1) Video files are now accepted as inputs and Occlusion-Net outputs the detected video file.
 
-[[Project](http://www.cs.cmu.edu/~ILIM/projects/IM/CarFusion/cvpr2019/index.html)] [[Paper](http://openaccess.thecvf.com/content_CVPR_2019/papers/Reddy_Occlusion-Net_2D3D_Occluded_Keypoint_Localization_Using_Graph_Networks_CVPR_2019_paper.pdf)] [[Supp](http://openaccess.thecvf.com/content_CVPR_2019/supplemental/Reddy_Occlusion-Net_2D3D_Occluded_CVPR_2019_supplemental.pdf)] [[Bibtex](http://www.cs.cmu.edu/~ILIM/projects/IM/CarFusion/cvpr2019/occlusion_net.bib) ]
+2) In addition to detected wireframe, the processed video files also have overlaid (drawn) bounding boxes (to aid qualitative evaluation).
 
-### Live Demo of the algorithm on a youtube live stream can be found below or [[HERE](https://www.youtube.com/channel/UC8pHfBEGqPwPlC39Ju7spEQ/live) ]:
-[<img src="https://img.youtube.com/vi/1UI4Zs28V_E/maxresdefault.jpg">](https://www.youtube.com/channel/UC8pHfBEGqPwPlC39Ju7spEQ/live)
+3) Frames which are skipped (not processed) by Occlusion-Net are stored separately as individual images (and not videos).
 
-### More Results
-<p align="center">
-<img src="data/demo1.gif", width="900">
-<br>
-<sup>Result of Occlusion-Net on a live video from youtube</sup>
-</p>
+4) The .json output for each object now contains predicted keypoint locations (earlier only BB coordinates) and their confidence scores.
 
+5) The bounding box coordinates of each object now match with their corresponding keypoints (earlier BB with ID=1 had keypoints corresponding to BB with ID=2).
 
-## Installation
-
-### Setting up with docker
-
-All the stable releases of docker-ce installed from https://docs.docker.com/install/
-
-Install the nvidia-docker from https://github.com/NVIDIA/nvidia-docker
-
-Setting up the docker
-
-```bash
-nvidia-docker build -t occlusion_net .
-```
-
-### Setting up data
-You need to fill the [Access Form](https://forms.gle/FCUcbt3jD1hB6ja57) to get a email regarding the dataset and setup at using the following commands: 
-```
-git clone https://github.com/dineshreddy91/carfusion_to_coco
-cd carfusion_to_coco
-virtualenv carfusion2coco -p python3.6
-source carfusion2coco/bin/activate
-pip install cython numpy
-pip install -r requirements.txt
-python download_carfusion.py (This file need to be downloaded by requesting, please fill to get access to the data)
-sh carfusion_coco_setup.sh
-deactivate
-```
-
-The final folder format to train on carfusion data needs to look :
-
- ```text
-Occlusion-Net
-    └─datasets
-        └─carfusion
-            └─train
-                └─car_craig1
-                    └───images
-                        01_0000.jpg
-                        01_0001.jpg
-                        ...   
-                    └───bb
-                       01_0000.txt
-                       01_0001.txt
-                       ...
-                    └───gt
-                       01_0000.txt   
-                       01_0001.txt
-                       ...
-            └─test
-                └─car_penn1
-                    └───images
-                        01_0000.jpg
-                        01_0001.jpg
-                        ...   
-                    └───bb
-                       01_0000.txt
-                       01_0001.txt
-                       ...
-                    └───gt
-                       01_0000.txt   
-                       01_0001.txt
-                       ...
-            └─annotations
-                car_keypoints_train.json
-                car_keypoints_test.json
-                
-```
+6) Additional python modules are available for extracting frames from videos to process them as an image directory and for combining the processed frames into a video. These are done in parallel.
 
 
-### Running with docker
+## Installation and Dataset setup
+Refer to original\_README.md for setting up Occlusion-Net and for information on dataset and training scripts (if retraining).
 
-Training the model on the carfusion dataset 
+Alternatively, pre-trained weights can also be downloaded. [[Google Drive](https://drive.google.com/open?id=1EUmhzeuMUnv5whv0ZmmOHTbtUiWdeDly)]
+
+
+
+### Running with video detection pipeline
+
+1) Clone the Occlusion-Net\_extended repository.
+
+2) Build docker-image
 
 ```
-sh train.sh occlusion_net <Path_to_Carfusion_dataset>
-``` 
-
-
-### Testing on a sample image
-Download a pretrained model from  [[Google Drive](https://drive.google.com/open?id=1EUmhzeuMUnv5whv0ZmmOHTbtUiWdeDly)]
-
-Results on a sample demo image
+nvidia-docker build -t occlusion\_net.
 
 ```
-sh test.sh occlusion_net demo/demo.jpg
-```
 
-### Citation
+3) Move the video to be processed in Occlusion\_Net/demo folder.
+
+4) Run detection pipeline on video. For eg. video name = test.mp4
+
 ```
-@inproceedings{onet_cvpr19,
-author = {Reddy, N. Dinesh and Vo, Minh and Narasimhan, Srinivasa G.},
-title = {Occlusion-Net: 2D/3D Occluded Keypoint Localization Using Graph Networks},
-booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-pages = {7326--7335},
-year = {2019}
-}
+sudo sh test.sh occlusion\_net ./demo/test.mp4
 ```
+5) Processed video file and missing frames are stored in Occlusion\_Net/log folder.
 
 
 
