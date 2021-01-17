@@ -1,6 +1,6 @@
 Occlusion-Net\_extended: Extending [[Occlusion-Net]https://github.com/dineshreddy91/Occlusion\_Net] for video analysis context.
 ======================
-This repository extends original [[Occlusion-Net]https://github.com/dineshreddy91/Occlusion\_Net] repository in order to run its object detection pipeline on traffic survelliance videos collected at the [[Chair of Integrated Transport Planning and Traffic Engineering]https://tu-dresden.de/bu/verkehr/ivs/ivst/studium?set_language=en].
+This repository extends original [[Occlusion-Net](https://github.com/dineshreddy91/Occlusion\_Net)] repository in order to run its object detection pipeline on traffic survelliance videos collected at the [[Chair of Integrated Transport Planning and Traffic Engineering](https://tu-dresden.de/bu/verkehr/ivs/ivst/studium?set_language=en)].
 
 The Occlusion-net\_extended extends Occlusion-Net as follows:
 
